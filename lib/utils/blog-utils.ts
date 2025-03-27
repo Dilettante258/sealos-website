@@ -35,21 +35,24 @@ export async function getAllTags(pages?: BlogPost[], lang?: languagesType) {
     posts = pages;
   } else {
     posts = [...blog.getPages(lang)];
-    
+
     // Apply the same language filtering logic as getSortedBlogPosts
     if (lang && posts.length > 0) {
-      posts = posts.filter(post => {
+      posts = posts.filter((post) => {
         // Check if the file path contains language identifier
         if (lang === 'zh-cn') {
           return post.file.path.includes('.zh-cn.');
         } else {
           // English articles typically don't have language identifiers or have .en.
-          return !post.file.path.includes('.zh-cn.') || post.file.path.includes('.en.');
+          return (
+            !post.file.path.includes('.zh-cn.') ||
+            post.file.path.includes('.en.')
+          );
         }
       });
     }
   }
-  
+
   const tagSet = new Set<string>();
 
   posts.forEach((post) => {
@@ -77,31 +80,38 @@ export function getBlogImage(title: string, category?: string) {
   return category ? `${baseUrl}?category=${encodeURI(category)}` : baseUrl;
 }
 
+export function getPostsByLuaguage(lang: languagesType) {
+  // Retrieve all blog posts filtered by language
+  const posts = blog.getPages(lang);
+
+  // Modify language filtering logic based on actual file structure
+  let filteredPosts = posts;
+
+  // Filter based on known file structure
+  if (lang && posts.length > 0) {
+    // Filter based on language identifiers in file paths
+    // Example: content/blog/(category)/article/index.zh-cn.md
+    filteredPosts = filteredPosts.filter((post) => {
+      // Check if the file path contains language identifier
+      if (lang === 'zh-cn') {
+        return post.file.path.includes('.zh-cn.');
+      } else {
+        // English articles typically don't have language identifiers or have .en.
+        return (
+          !post.file.path.includes('.zh-cn.') || post.file.path.includes('.en.')
+        );
+      }
+    });
+  }
+  return filteredPosts;
+}
+
 export function getSortedBlogPosts(options?: {
   category?: string;
   tags?: string[];
   lang?: languagesType;
 }) {
-  // Retrieve all blog posts filtered by language
-  const posts = blog.getPages(options?.lang);
-
-  // Modify language filtering logic based on actual file structure
-  let filteredPosts = posts;
-  
-  // Filter based on known file structure
-  if (options?.lang && posts.length > 0) {
-    // Filter based on language identifiers in file paths
-    // Example: content/blog/(category)/article/index.zh-cn.md
-    filteredPosts = filteredPosts.filter(post => {   
-      // Check if the file path contains language identifier
-      if (options.lang === 'zh-cn') {
-        return post.file.path.includes('.zh-cn.');
-      } else {
-        // English articles typically don't have language identifiers or have .en.
-        return !post.file.path.includes('.zh-cn.') || post.file.path.includes('.en.');
-      }
-    });
-  }
+  let filteredPosts = getPostsByLuaguage(options?.lang ?? 'en');
 
   // Filter by category if provided
   if (options?.category) {
